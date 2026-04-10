@@ -174,11 +174,12 @@ struct SupabaseIntegrationPathTests {
 
         let auth = SupabaseAuthService(config: config, sessionStore: store, session: session)
         let sessionAfter = try await auth.unlinkProvider(.apple)
+        let currentSessionProvider = await store.current()?.authSession.provider
 
         #expect(calledPaths.contains("/auth/v1/user"))
         #expect(calledPaths.contains("/auth/v1/user/identities/apple-id-1"))
         #expect(sessionAfter.provider == .email)
-        #expect((await store.current())?.authSession.provider == .email)
+        #expect(currentSessionProvider == .email)
     }
 
     @Test

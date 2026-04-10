@@ -13,8 +13,9 @@ func bootstrapCreatesSnapshotWhenSessionExists() async throws {
     let service = AppBootstrapService(authService: auth, homeRepository: homes, snapshotRepository: snapshots)
 
     let result = try await service.appDidBecomeActive(now: Date(timeIntervalSince1970: 2_000))
+    let currentUserID = await auth.currentSession()?.userID
 
-    #expect(result.userID == (await auth.currentSession())?.userID)
+    #expect(result.userID == currentUserID)
     #expect(result.entityType == TimeEntityType.user)
 }
 
