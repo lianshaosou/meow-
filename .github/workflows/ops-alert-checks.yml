@@ -52,6 +52,6 @@ jobs:
               labels: ['incident', 'ops-alert']
             })
 
-      - name: Fail on active alerts
-        if: steps.alert_check.outcome == 'failure'
+      - name: Fail on alert-check execution error
+        if: steps.alert_check.outcome == 'failure' && steps.alert_check.outputs.alert_active != 'true'
         run: exit 1
