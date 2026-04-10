@@ -1,0 +1,100 @@
+name: P1 Validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_staging_smoke:
+        description: "Run APNs worker staging smoke"
+        required: false
+        default: false
+        type: boolean
+      run_staging_db_checks:
+        description: "Apply/verify push worker staging migrations"
+        required: false
+        default: false
+        type: boolean
+      run_staging_closeout:
+        description: "Run full staging closeout (DB checks + smoke)"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  swift-tests:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run MeowCore tests
+        run: swift test
+        working-directory: ios/MeowCore
+
+  deno-worker-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Run APNs worker utility tests
+        run: deno test backend/functions/apns-push-worker/worker_utils_test.ts backend/functions/apns-push-worker/worker_core_test.ts
+
+  staging-apns-worker-smoke:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_staging_smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run APNs worker staging smoke
+        env:
+          APNS_WORKER_SMOKE_URL: ${{ secrets.APNS_WORKER_SMOKE_URL }}
+          APNS_WORKER_SMOKE_BEARER: ${{ secrets.APNS_WORKER_SMOKE_BEARER }}
+        run: bash backend/live_ops/apns_worker_smoke.sh
+
+  staging-push-worker-db-checks:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_staging_db_checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run push worker staging DB checks
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: bash backend/live_ops/run_push_worker_staging_checks.sh
+
+  staging-p1-closeout:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_staging_closeout
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run full P1 staging closeout
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+          APNS_WORKER_SMOKE_URL: ${{ secrets.APNS_WORKER_SMOKE_URL }}
+          APNS_WORKER_SMOKE_BEARER: ${{ secrets.APNS_WORKER_SMOKE_BEARER }}
+        run: bash backend/live_ops/p1_closeout_staging.sh

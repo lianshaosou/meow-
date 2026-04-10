@@ -1,0 +1,19 @@
+name: Region Lifecycle Worker
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-lifecycle-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Invoke region lifecycle worker
+        env:
+          REGION_LIFECYCLE_WORKER_URL: ${{ secrets.REGION_LIFECYCLE_WORKER_URL }}
+          REGION_LIFECYCLE_WORKER_BEARER: ${{ secrets.REGION_LIFECYCLE_WORKER_BEARER }}
+        run: bash backend/live_ops/region_lifecycle_worker_smoke.sh

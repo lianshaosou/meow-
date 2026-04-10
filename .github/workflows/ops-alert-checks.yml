@@ -1,0 +1,61 @@
+name: Ops Alert Checks
+
+on:
+  schedule:
+    - cron: "15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  run-alert-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run consolidated alert checks
+        id: alert_check
+        continue-on-error: true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+          OPS_ALERT_WEBHOOK_URL: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+        run: bash backend/live_ops/run_ops_alert_checks.sh
+
+      - name: Create GitHub incident issue
+        if: steps.alert_check.outputs.alert_active == 'true' && vars.CREATE_GITHUB_INCIDENT_ON_ALERT == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `[Ops Alert] Meow alert checks active (${new Date().toISOString()})`
+            const payload = `${{ toJson(steps.alert_check.outputs.alert_payload) }}`
+            const body = [
+              'Automated ops alert checks detected one or more active alerts.',
+              '',
+              'Workflow: `.github/workflows/ops-alert-checks.yml`',
+              'Runbook: `backend/live_ops/ANALYTICS_ALERT_RUNBOOK.md`',
+              '',
+              'Alert payload:',
+              '```json',
+              payload,
+              '```'
+            ].join('\n')
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['incident', 'ops-alert']
+            })
+
+      - name: Fail on active alerts
+        if: steps.alert_check.outputs.alert_active == 'true'
+        run: exit 1
+
+      - name: Fail on alert-check execution error
+        if: steps.alert_check.outcome == 'failure' && steps.alert_check.outputs.alert_active != 'true'
+        run: exit 1
