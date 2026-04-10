@@ -27,12 +27,12 @@ jobs:
         run: bash backend/live_ops/run_ops_alert_checks.sh
 
       - name: Create GitHub incident issue
-        if: steps.alert_check.outputs.alert_active == 'true' && vars.CREATE_GITHUB_INCIDENT_ON_ALERT == 'true'
+        if: steps.alert_check.outcome == 'failure' && vars.CREATE_GITHUB_INCIDENT_ON_ALERT == 'true'
         uses: actions/github-script@v7
         with:
           script: |
             const title = `[Ops Alert] Meow alert checks active (${new Date().toISOString()})`
-            const payload = `${{ toJson(steps.alert_check.outputs.alert_payload) }}`
+            const payload = `${{ toJson(steps.alert_check.outputs.alert_payload) || '{}' }}`
             const body = [
               'Automated ops alert checks detected one or more active alerts.',
               '',
@@ -53,9 +53,5 @@ jobs:
             })
 
       - name: Fail on active alerts
-        if: steps.alert_check.outputs.alert_active == 'true'
-        run: exit 1
-
-      - name: Fail on alert-check execution error
-        if: steps.alert_check.outcome == 'failure' && steps.alert_check.outputs.alert_active != 'true'
+        if: steps.alert_check.outcome == 'failure'
         run: exit 1
