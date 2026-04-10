@@ -19,7 +19,6 @@ jobs:
 
       - name: Run consolidated alert checks
         id: alert_check
-        continue-on-error: true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
@@ -27,7 +26,7 @@ jobs:
         run: bash backend/live_ops/run_ops_alert_checks.sh
 
       - name: Create GitHub incident issue
-        if: steps.alert_check.outcome == 'failure' && vars.CREATE_GITHUB_INCIDENT_ON_ALERT == 'true'
+        if: steps.alert_check.outputs.alert_active == 'true' && vars.CREATE_GITHUB_INCIDENT_ON_ALERT == 'true'
         uses: actions/github-script@v7
         with:
           script: |

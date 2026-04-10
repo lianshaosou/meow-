@@ -49,5 +49,4 @@ if [[ -n "${OPS_ALERT_WEBHOOK_URL:-}" ]]; then
     -d "$webhook_body" >/dev/null
   echo "Posted alert payload to webhook"
 fi
-
-exit 1
+exit 0
