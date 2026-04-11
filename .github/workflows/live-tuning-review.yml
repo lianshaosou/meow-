@@ -1,0 +1,24 @@
+name: Live Tuning Review
+
+on:
+  schedule:
+    - cron: "15 3 * * 2"
+  workflow_dispatch:
+
+jobs:
+  run-live-tuning-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run live tuning review
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: bash backend/live_ops/run_live_tuning_review.sh
