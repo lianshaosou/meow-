@@ -33,6 +33,13 @@ jobs:
         with:
           version: latest
 
+      - name: Link Supabase project
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: supabase link --project-ref "$STAGING_PROJECT_REF"
+
       - name: Run consolidated alert checks
         id: alert_check
         if: steps.config.outputs.ready == 'true'
