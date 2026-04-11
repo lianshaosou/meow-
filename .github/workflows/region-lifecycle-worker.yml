@@ -19,6 +19,8 @@ jobs:
           if [[ -z "${REGION_LIFECYCLE_WORKER_URL}" || -z "${REGION_LIFECYCLE_WORKER_BEARER}" ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "Skipping region lifecycle worker: missing worker config"
+            echo "## Region Lifecycle Worker skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Missing \\`REGION_LIFECYCLE_WORKER_URL\\` or \\`REGION_LIFECYCLE_WORKER_BEARER\\`." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
