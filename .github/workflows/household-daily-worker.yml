@@ -1,0 +1,19 @@
+name: Household Daily Worker
+
+on:
+  schedule:
+    - cron: "30 1 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-household-daily-tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Invoke household daily worker
+        env:
+          HOUSEHOLD_DAILY_WORKER_URL: ${{ secrets.HOUSEHOLD_DAILY_WORKER_URL }}
+          HOUSEHOLD_DAILY_WORKER_BEARER: ${{ secrets.HOUSEHOLD_DAILY_WORKER_BEARER }}
+        run: bash backend/live_ops/household_daily_worker_smoke.sh
