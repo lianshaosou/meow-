@@ -7,12 +7,28 @@ on:
 
 jobs:
   run-household-daily-tick:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_HOUSEHOLD_DAILY_WORKER == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Validate household worker config
+        id: config
+        env:
+          HOUSEHOLD_DAILY_WORKER_URL: ${{ secrets.HOUSEHOLD_DAILY_WORKER_URL }}
+          HOUSEHOLD_DAILY_WORKER_BEARER: ${{ secrets.HOUSEHOLD_DAILY_WORKER_BEARER }}
+        run: |
+          if [[ -z "${HOUSEHOLD_DAILY_WORKER_URL}" || -z "${HOUSEHOLD_DAILY_WORKER_BEARER}" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping household daily worker: missing worker config"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.config.outputs.ready == 'true'
         uses: actions/checkout@v4
 
       - name: Invoke household daily worker
+        if: steps.config.outputs.ready == 'true'
         env:
           HOUSEHOLD_DAILY_WORKER_URL: ${{ secrets.HOUSEHOLD_DAILY_WORKER_URL }}
           HOUSEHOLD_DAILY_WORKER_BEARER: ${{ secrets.HOUSEHOLD_DAILY_WORKER_BEARER }}
