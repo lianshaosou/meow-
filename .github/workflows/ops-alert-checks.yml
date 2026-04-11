@@ -19,9 +19,13 @@ jobs:
           if [[ -z "${SUPABASE_ACCESS_TOKEN}" || -z "${STAGING_PROJECT_REF}" ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "Skipping ops alert checks: missing Supabase config"
+            echo "## Ops Alert Checks skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Missing \\`SUPABASE_ACCESS_TOKEN\\` or \\`STAGING_PROJECT_REF\\`." >> "$GITHUB_STEP_SUMMARY"
           elif [[ "${SUPABASE_ACCESS_TOKEN}" != sbp_* ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "Skipping ops alert checks: SUPABASE_ACCESS_TOKEN is not a Supabase personal access token"
+            echo "## Ops Alert Checks skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Secret \\`SUPABASE_ACCESS_TOKEN\\` must start with \\`sbp_\\`." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
