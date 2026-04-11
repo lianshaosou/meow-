@@ -7,12 +7,28 @@ on:
 
 jobs:
   run-lifecycle-sweep:
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_REGION_LIFECYCLE_WORKER == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Validate region lifecycle config
+        id: config
+        env:
+          REGION_LIFECYCLE_WORKER_URL: ${{ secrets.REGION_LIFECYCLE_WORKER_URL }}
+          REGION_LIFECYCLE_WORKER_BEARER: ${{ secrets.REGION_LIFECYCLE_WORKER_BEARER }}
+        run: |
+          if [[ -z "${REGION_LIFECYCLE_WORKER_URL}" || -z "${REGION_LIFECYCLE_WORKER_BEARER}" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping region lifecycle worker: missing worker config"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout
+        if: steps.config.outputs.ready == 'true'
         uses: actions/checkout@v4
 
       - name: Invoke region lifecycle worker
+        if: steps.config.outputs.ready == 'true'
         env:
           REGION_LIFECYCLE_WORKER_URL: ${{ secrets.REGION_LIFECYCLE_WORKER_URL }}
           REGION_LIFECYCLE_WORKER_BEARER: ${{ secrets.REGION_LIFECYCLE_WORKER_BEARER }}
