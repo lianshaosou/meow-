@@ -19,6 +19,8 @@ jobs:
           if [[ -z "${HOUSEHOLD_DAILY_WORKER_URL}" || -z "${HOUSEHOLD_DAILY_WORKER_BEARER}" ]]; then
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "Skipping household daily worker: missing worker config"
+            echo "## Household Daily Worker skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "Missing \\`HOUSEHOLD_DAILY_WORKER_URL\\` or \\`HOUSEHOLD_DAILY_WORKER_BEARER\\`." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
