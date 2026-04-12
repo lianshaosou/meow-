@@ -55,3 +55,15 @@ jobs:
         run: |
           supabase db query --linked --workdir . --output json -f backend/analytics/live_tuning_review_queries.sql
           supabase db query --linked --workdir . --output json -f backend/analytics/ops_alert_checks.sql
+
+      - name: Publish tuning snapshot summary
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: |
+          {
+            echo "## Live Tuning Snapshot"
+            echo
+            bash backend/live_ops/print_live_tuning_snapshot.sh
+          } >> "$GITHUB_STEP_SUMMARY"
